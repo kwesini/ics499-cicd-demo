@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ICS 499 Grade Calculator</title>
+  <style>
+    :root { --navy: #14213d; --gold: #d4a12a; --paper: #fbf8f1; --ink: #1b1f2a; --muted: #5b6475; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--navy); color: var(--ink);
+           font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+           display: flex; align-items: center; justify-content: center; padding: 24px; }
+    main { background: var(--paper); width: 100%; max-width: 440px; border-radius: 14px;
+           padding: 32px 28px 22px; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+    .version { display: inline-block; background: var(--gold); color: var(--navy);
+               font-weight: 700; font-size: .9rem; padding: 4px 12px; border-radius: 999px; }
+    h1 { font-family: Georgia, "Times New Roman", serif; color: var(--navy);
+         font-size: 1.9rem; margin: 14px 0 4px; }
+    p.lead { color: var(--muted); margin: 0 0 22px; }
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
+    .row { display: flex; gap: 10px; }
+    input { flex: 1; font-size: 1.2rem; padding: 10px 12px; border: 2px solid #c9ced8; border-radius: 8px; }
+    input:focus { outline: none; border-color: var(--navy); }
+    button { font-size: 1rem; font-weight: 700; padding: 10px 18px; border: 0; border-radius: 8px;
+             background: var(--navy); color: #fff; cursor: pointer; }
+    #result { margin: 26px 0 10px; text-align: center; min-height: 120px; }
+    #letter { font-family: Georgia, "Times New Roman", serif; font-size: 5.5rem; line-height: 1;
+              color: var(--navy); font-weight: 700; }
+    #message { color: var(--muted); margin-top: 6px; }
+    .error { color: #b3261e !important; }
+    footer { border-top: 1px dashed #c9ced8; margin-top: 18px; padding-top: 12px;
+             font-size: .8rem; color: var(--muted); }
+    code { background: #eceff4; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <!-- DEMO: edit the next line live in class, commit it, and watch CD update the site -->
+    <span class="version" id="version">Version 1</span>
+
+    <h1>ICS 499 Grade Calculator</h1>
+    <p class="lead">Type a course percentage to see the letter grade.</p>
+
+    <label for="percent">Percentage (0–100)</label>
+    <div class="row">
+      <input id="percent" type="number" min="0" max="100" step="0.1" placeholder="e.g. 91.5">
+      <button id="go">Get grade</button>
+    </div>
+
+    <div id="result">
+      <div id="letter">–</div>
+      <div id="message">Uses the same grading scale as the Python code and its tests.</div>
+    </div>
+
+    <footer>
+      Deployed by GitHub Actions from commit <code>__COMMIT__</code> at __BUILD_TIME__
+    </footer>
+  </main>
+
+  <script>
+    // The grading scale is loaded from grading_scale.json, the SAME file the
+    // Python code and its tests use. If a bad scale fails the tests,
+    // the deploy job is skipped and this page never receives the bad file.
+    let cutoffs = [];
+
+    fetch("grading_scale.json")
+      .then((response) => response.json())
+      .then((data) => { cutoffs = data.cutoffs; })
+      .catch(() => show("?", "Could not load the grading scale.", true));
+
+    function letterGrade(percent) {
+      for (const row of cutoffs) {          // highest cutoff first
+        if (percent >= row.min) return row.letter;
+      }
+      return "F";
+    }
+
+    function show(letter, message, isError) {
+      document.getElementById("letter").textContent = letter;
+      const msg = document.getElementById("message");
+      msg.textContent = message;
+      msg.classList.toggle("error", Boolean(isError));
+    }
+
+    function calculate() {
+      const raw = document.getElementById("percent").value;
+      const percent = Number(raw);
+      if (raw === "" || Number.isNaN(percent) || percent < 0 || percent > 100) {
+        show("!", "Please enter a number from 0 to 100.", true);   // same rule as Python
+        return;
+      }
+      const letter = letterGrade(percent);
+      show(letter, percent + "% → " + letter, false);
+    }
+
+    document.getElementById("go").addEventListener("click", calculate);
+    document.getElementById("percent").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") calculate();
+    });
+  </script>
+</body>
+</html>

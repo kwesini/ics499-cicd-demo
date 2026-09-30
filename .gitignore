@@ -1,0 +1,9 @@
+# Python junk that should never be committed
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+# Local secrets
+.env

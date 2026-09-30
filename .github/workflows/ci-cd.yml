@@ -1,0 +1,60 @@
+# .github/workflows/ci-cd.yml
+# CI: test every change.  CD: publish the website only when tests pass on main.
+name: CI-CD
+
+on:
+  push:
+    branches: [main]      # run on every push to main (CI + CD)
+  pull_request:           # run on every pull request (CI only)
+  workflow_dispatch:      # adds a "Run workflow" button in the Actions tab
+
+permissions:
+  contents: read          # by default the robot can only read the code
+
+jobs:
+  # ---------------- CI: build and test ----------------
+  build-test:
+    runs-on: ubuntu-latest            # a fresh Linux computer from GitHub
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v6
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip                  # reuse downloads = faster
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Lint (style + likely bugs)
+        run: ruff check .
+      - name: Run tests
+        run: python -m pytest --cov=src -v
+
+  # ---------------- CD: deploy the website ----------------
+  deploy:
+    needs: build-test                 # waits for CI; SKIPPED if CI fails
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write                    # may publish to GitHub Pages
+      id-token: write                 # proves the request comes from this repo
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}   # link shown on the run page
+    concurrency:
+      group: pages                    # one deployment at a time
+      cancel-in-progress: false
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v6
+      - name: Stamp the page with the commit and time
+        run: |
+          sed -i "s/__COMMIT__/${GITHUB_SHA::7}/" site/index.html
+          sed -i "s/__BUILD_TIME__/$(date -u '+%Y-%m-%d %H:%M UTC')/" site/index.html
+      - name: Package the website
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

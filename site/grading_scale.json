@@ -1,0 +1,16 @@
+{
+  "course": "ICS 499",
+  "cutoffs": [
+    { "min": 95, "letter": "A" },
+    { "min": 90, "letter": "A-" },
+    { "min": 88, "letter": "B+" },
+    { "min": 85, "letter": "B" },
+    { "min": 80, "letter": "B-" },
+    { "min": 78, "letter": "C+" },
+    { "min": 75, "letter": "C" },
+    { "min": 70, "letter": "C-" },
+    { "min": 68, "letter": "D+" },
+    { "min": 65, "letter": "D" },
+    { "min": 60, "letter": "D-" }
+  ]
+}
